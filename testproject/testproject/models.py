@@ -20,4 +20,5 @@ class Parent(models.Model):
 
 class ChildOneToMany(models.Model):
 
-    my_parent = models.ForeignKey(Parent)
+    my_parent = models.ForeignKey(Parent, related_name='my_otm_children')
+    another_int_property = models.IntegerField(null=True, blank=True)

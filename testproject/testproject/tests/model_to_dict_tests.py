@@ -22,7 +22,7 @@ class ModelToDictTests(unittest.TestCase):
         self.assertEqual(res['some_char_property'], 'testing')
         # import pprint; pprint.pprint(res)
 
-    def test_another(self):
+    def test_one_to_one(self):
         coto = ChildOneToOne.objects.create(
             some_int_property=1,
         )
@@ -33,3 +33,17 @@ class ModelToDictTests(unittest.TestCase):
         res = django_serialize.model_to_dict(pobj)
         self.assertEqual(res['a_one_to_one_child']['some_int_property'], 1)
         # import pprint; pprint.pprint(res)
+
+    def test_one_to_many(self):
+        pobj = Parent.objects.create(
+            some_char_property='testing',
+        )
+        ChildOneToMany.objects.create(
+            my_parent=pobj,
+            another_int_property=2,
+        )
+        res = django_serialize.model_to_dict(pobj)
+        # import pprint; pprint.pprint(res)
+        self.assertEqual(len(res['my_otm_children']), 1)
+        the_otm_child = res['my_otm_children'][0]
+        self.assertEqual(the_otm_child['another_int_property'], 2)
