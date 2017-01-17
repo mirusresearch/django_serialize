@@ -47,3 +47,15 @@ class ModelToDictTests(unittest.TestCase):
         self.assertEqual(len(res['my_otm_children']), 1)
         the_otm_child = res['my_otm_children'][0]
         self.assertEqual(the_otm_child['another_int_property'], 2)
+
+    # F. Henard 1/17/17 - it appears that many to many isn't implemented
+    # def test_many_to_many(self):
+    #     cmtm = ChildManyToMany.objects.create(
+    #         another_char_property='test2',
+    #     )
+    #     pobj = Parent.objects.create(
+    #         some_char_property='testing',
+    #     )
+    #     pobj.a_many_to_many_child.add(cmtm)
+    #     res = django_serialize.model_to_dict(pobj)
+    #     import pprint; pprint.pprint(res)
