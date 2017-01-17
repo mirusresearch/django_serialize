@@ -3,7 +3,7 @@ import unittest
 from testproject.models import Parent
 
 
-class TryingTest(unittest.TestCase):
+class ModelToDictTests(unittest.TestCase):
 
     def test_it(self):
         pobj = Parent.objects.create(
