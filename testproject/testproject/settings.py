@@ -108,3 +108,8 @@ NOSE_ARGS = [
     '--exe',
     # '--verbosity=4',
 ]
+
+DJ_SER_PATH = os.path.dirname(BASE_DIR)
+import sys
+if DJ_SER_PATH not in sys.path:
+    sys.path.append(DJ_SER_PATH)
