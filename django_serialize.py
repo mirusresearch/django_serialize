@@ -14,6 +14,7 @@ elif DJANGO_VER >= version.parse('1.9'):
     RELATED_MGR_TYPE = 'django.db.models.fields.related_descriptors.RelatedManager'
 else:
     raise Exception('should never be here')
+ONE_TO_ONE_TYPE = 'django.db.models.fields.related.OneToOneField'
 
 
 def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converters={}):
@@ -24,7 +25,7 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
         return None
     RELATED_OBJ_TYPE = "django.db.models.related.RelatedObject"
     RELATED_TYPES = [RELATED_OBJ_TYPE, MANY_TO_ONE_REL_TYPE]
-    ONE_TO_ONE_TYPE = "django.db.models.fields.related.OneToOneField"
+    # ONE_TO_ONE_TYPE = "django.db.models.fields.related.OneToOneField"
 
     model_as_dict = copy.copy(model_obj.__dict__)
     model_fieldnames = model_obj._meta.get_all_field_names()
@@ -103,7 +104,7 @@ def deep_deserialize(json_str, model_obj_type):
 def deep_deserialize_from_dict(dikt, model_obj_type):
     import copy
     import decimal
-    from django.db import IntegrityError
+    # from django.db import IntegrityError
     # from mirus import utils as mirus_utils
     # from sf_aoc.utils import utils
 
@@ -130,12 +131,10 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     # import pprint; logger.debug("before: %s" % pprint.pformat(dikt))
     FOREIGN_KEY_FIELD_TYPE = "django.db.models.fields.related.ForeignKey"
     CHILD_FIELD_TYPE = "django.db.models.related.RelatedObject"
-    ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
+    # ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
     CHILD_FIELD_TYPES = [
         CHILD_FIELD_TYPE,
         MANY_TO_ONE_REL_TYPE,
-        # ONE_TO_ONE_REL_TYPE,
-        # ONE_TO_ONE_FIELD_TYPE,
     ]
     DATE_TIME_FIELD_TYPE = "django.db.models.fields.DateTimeField"
     DECIMAL_FIELD = "django.db.models.fields.DecimalField"
@@ -155,10 +154,8 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
                     # as of django 1.7 the fk id field is included
                     del dikt_copy[field_name]
                 else:
-                    # dikt_copy[field_name] = field.related.parent_model.objects.get(pk=dikt_copy[field_name])
                     dikt_copy[field_name] = field.related.model.objects.get(pk=dikt_copy[field_name])
-            # elif field_type_str == CHILD_FIELD_TYPE:
-            elif field_type_str == ONE_TO_ONE_FIELD_TYPE:
+            elif field_type_str == ONE_TO_ONE_TYPE:
                 oto_child_obj = deep_deserialize_from_dict(copy.deepcopy(dikt[field_name]), field.related_model)
                 dikt_copy[field_name] = oto_child_obj
             elif field_type_str in CHILD_FIELD_TYPES:
@@ -177,14 +174,12 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
         matching_instances.update(**dikt_copy)
         instance = matching_instances.all()[0]
     else:
-        # import pdb; pdb.set_trace()
         instance = model_obj_type(**dikt_copy)
-    try:
-        instance.clean()
-        instance.save()
-    except IntegrityError, ie:
-        raise
-        # raise Exception(utils.get_exception_wrap_message(ie, "Error saving %s with values %s." % (model_obj_type, dikt_copy)))
+    # try:
+    instance.clean()
+    instance.save()
+    # except IntegrityError, ie:
+    #     raise
     # logger.debug("child fields = %s"%child_fields
     for child_field in child_fields:
         child_field_name = child_field.get_accessor_name()
