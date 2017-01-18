@@ -1,24 +1,31 @@
 import logging
+import django
+
+from packaging import version
 
 logger = logging.getLogger(__name__)
+
+DJANGO_VER = version.parse(django.get_version())
+if DJANGO_VER < version.parse('1.9'):
+    MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
+    RELATED_MGR_TYPE = 'django.db.models.fields.related.RelatedManager'
+elif DJANGO_VER >= version.parse('1.9'):
+    MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.reverse_related.ManyToOneRel'
+    RELATED_MGR_TYPE = 'django.db.models.fields.related_descriptors.RelatedManager'
+else:
+    raise Exception('should never be here')
 
 
 def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converters={}):
     import decimal
     import datetime
     import copy
-    # import pprint
-    # from mirus.django import converters
-    # from mirus import utils as mirus_utils
     if not model_obj:
         return None
     RELATED_OBJ_TYPE = "django.db.models.related.RelatedObject"
-    MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
     RELATED_TYPES = [RELATED_OBJ_TYPE, MANY_TO_ONE_REL_TYPE]
-    RELATED_MGR_TYPE = "django.db.models.fields.related.RelatedManager"
     ONE_TO_ONE_TYPE = "django.db.models.fields.related.OneToOneField"
-    # model_as_dict = copy.deepcopy(model_obj.__dict__)  # F. Henard 10/29/15 - deepcopy causing a problem in django 1.8.
-    # Pretty sure we don't need to deepcopy because we are diving into the model through _meta.get_all_field_names()
+
     model_as_dict = copy.copy(model_obj.__dict__)
     model_fieldnames = model_obj._meta.get_all_field_names()
     def should_exclude_field(_fieldname):
@@ -170,16 +177,6 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     # import pprint; logger.debug("before: %s" % pprint.pformat(dikt))
     FOREIGN_KEY_FIELD_TYPE = "django.db.models.fields.related.ForeignKey"
     CHILD_FIELD_TYPE = "django.db.models.related.RelatedObject"
-    from packaging import version
-    import django
-    dj_ver = version.parse(django.get_version())
-    if dj_ver < version.parse('1.9'):
-        MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
-    elif dj_ver >= version.parse('1.9'):
-        MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.reverse_related.ManyToOneRel'
-    else:
-        raise Exception('should never be here')
-    # ONE_TO_ONE_REL_TYPE = 'django.db.models.fields.related.OneToOneRel'
     ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
     CHILD_FIELD_TYPES = [
         CHILD_FIELD_TYPE,
