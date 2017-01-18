@@ -147,6 +147,15 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     # from mirus import utils as mirus_utils
     # from sf_aoc.utils import utils
 
+    def is_dj_version(ver_in):
+        if len(ver_in) == 0:
+            raise Exception('need at least one to match with')
+        import django
+        major_matches = django.VERSION[0] == ver_in[0]
+        minor_matches = len(ver_in) < 2 or django.VERSION[1] == ver_in[1]
+        patch_matches = len(ver_in) < 3 or django.VERSION[2] == ver_in[2]
+        return major_matches and minor_matches and patch_matches
+
     def recursive_delete(obj_to_delete, parent_fk_field_name):
         for field_name in obj_to_delete._meta.get_all_field_names():
             field = obj_to_delete._meta.get_field_by_name(field_name)[0]
@@ -161,7 +170,15 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     # import pprint; logger.debug("before: %s" % pprint.pformat(dikt))
     FOREIGN_KEY_FIELD_TYPE = "django.db.models.fields.related.ForeignKey"
     CHILD_FIELD_TYPE = "django.db.models.related.RelatedObject"
-    MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
+    from packaging import version
+    import django
+    dj_ver = version.parse(django.get_version())
+    if dj_ver < version.parse('1.9'):
+        MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
+    elif dj_ver >= version.parse('1.9'):
+        MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.reverse_related.ManyToOneRel'
+    else:
+        raise Exception('should never be here')
     # ONE_TO_ONE_REL_TYPE = 'django.db.models.fields.related.OneToOneRel'
     ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
     CHILD_FIELD_TYPES = [
@@ -181,6 +198,7 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     for field_name in model_obj_type._meta.get_all_field_names():
         field = model_obj_type._meta.get_field_by_name(field_name)[0]
         field_type_str = class_fullname(type(field))
+        # logger.debug('field_type_str = %s' % field_type_str)
         if field_name in dikt_copy.keys():
             if field_type_str == FOREIGN_KEY_FIELD_TYPE:
                 if field_name.endswith("_id") and field_name[:-len("_id")] in dikt_copy.keys():
@@ -218,6 +236,7 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
         matching_instances.update(**dikt_copy)
         instance = matching_instances.all()[0]
     else:
+        # import pdb; pdb.set_trace()
         instance = model_obj_type(**dikt_copy)
     try:
         instance.clean()
