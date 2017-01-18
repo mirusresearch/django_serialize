@@ -162,11 +162,13 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     FOREIGN_KEY_FIELD_TYPE = "django.db.models.fields.related.ForeignKey"
     CHILD_FIELD_TYPE = "django.db.models.related.RelatedObject"
     MANY_TO_ONE_REL_TYPE = 'django.db.models.fields.related.ManyToOneRel'
-    ONE_TO_ONE_REL_TYPE = 'django.db.models.fields.related.OneToOneRel'
+    # ONE_TO_ONE_REL_TYPE = 'django.db.models.fields.related.OneToOneRel'
+    ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
     CHILD_FIELD_TYPES = [
         CHILD_FIELD_TYPE,
         MANY_TO_ONE_REL_TYPE,
-        ONE_TO_ONE_REL_TYPE,
+        # ONE_TO_ONE_REL_TYPE,
+        # ONE_TO_ONE_FIELD_TYPE,
     ]
     DATE_TIME_FIELD_TYPE = "django.db.models.fields.DateTimeField"
     DECIMAL_FIELD = "django.db.models.fields.DecimalField"
@@ -188,6 +190,9 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
                     # dikt_copy[field_name] = field.related.parent_model.objects.get(pk=dikt_copy[field_name])
                     dikt_copy[field_name] = field.related.model.objects.get(pk=dikt_copy[field_name])
             # elif field_type_str == CHILD_FIELD_TYPE:
+            elif field_type_str == ONE_TO_ONE_FIELD_TYPE:
+                oto_child_obj = deep_deserialize_from_dict(copy.deepcopy(dikt[field_name]), field.related_model)
+                dikt_copy[field_name] = oto_child_obj
             elif field_type_str in CHILD_FIELD_TYPES:
                 child_fields.append(field)
                 del dikt_copy[field_name]
