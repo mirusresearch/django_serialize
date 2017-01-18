@@ -145,7 +145,7 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     import decimal
     from django.db import IntegrityError
     # from mirus import utils as mirus_utils
-    from sf_aoc.utils import utils
+    # from sf_aoc.utils import utils
 
     def recursive_delete(obj_to_delete, parent_fk_field_name):
         for field_name in obj_to_delete._meta.get_all_field_names():
@@ -218,7 +218,8 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
         instance.clean()
         instance.save()
     except IntegrityError, ie:
-        raise Exception(utils.get_exception_wrap_message(ie, "Error saving %s with values %s." % (model_obj_type, dikt_copy)))
+        raise
+        # raise Exception(utils.get_exception_wrap_message(ie, "Error saving %s with values %s." % (model_obj_type, dikt_copy)))
     # logger.debug("child fields = %s"%child_fields
     for child_field in child_fields:
         child_field_name = child_field.get_accessor_name()
