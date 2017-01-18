@@ -1,5 +1,8 @@
 import logging
 import django
+import decimal
+import datetime
+import copy
 
 from packaging import version
 
@@ -18,14 +21,10 @@ ONE_TO_ONE_TYPE = 'django.db.models.fields.related.OneToOneField'
 
 
 def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converters={}):
-    import decimal
-    import datetime
-    import copy
     if not model_obj:
         return None
     RELATED_OBJ_TYPE = "django.db.models.related.RelatedObject"
     RELATED_TYPES = [RELATED_OBJ_TYPE, MANY_TO_ONE_REL_TYPE]
-    # ONE_TO_ONE_TYPE = "django.db.models.fields.related.OneToOneField"
 
     model_as_dict = copy.copy(model_obj.__dict__)
     model_fieldnames = model_obj._meta.get_all_field_names()
@@ -102,20 +101,6 @@ def deep_deserialize(json_str, model_obj_type):
 
 # Save a model object from a dictionary object
 def deep_deserialize_from_dict(dikt, model_obj_type):
-    import copy
-    import decimal
-    # from django.db import IntegrityError
-    # from mirus import utils as mirus_utils
-    # from sf_aoc.utils import utils
-
-    def is_dj_version(ver_in):
-        if len(ver_in) == 0:
-            raise Exception('need at least one to match with')
-        import django
-        major_matches = django.VERSION[0] == ver_in[0]
-        minor_matches = len(ver_in) < 2 or django.VERSION[1] == ver_in[1]
-        patch_matches = len(ver_in) < 3 or django.VERSION[2] == ver_in[2]
-        return major_matches and minor_matches and patch_matches
 
     def recursive_delete(obj_to_delete, parent_fk_field_name):
         for field_name in obj_to_delete._meta.get_all_field_names():
@@ -131,7 +116,6 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     # import pprint; logger.debug("before: %s" % pprint.pformat(dikt))
     FOREIGN_KEY_FIELD_TYPE = "django.db.models.fields.related.ForeignKey"
     CHILD_FIELD_TYPE = "django.db.models.related.RelatedObject"
-    # ONE_TO_ONE_FIELD_TYPE = 'django.db.models.fields.related.OneToOneField'
     CHILD_FIELD_TYPES = [
         CHILD_FIELD_TYPE,
         MANY_TO_ONE_REL_TYPE,
