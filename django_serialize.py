@@ -69,7 +69,6 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
         #     'next_include_paths': next_include_paths,
         # }))
         # logger.debug("path = %s; field type = %s" % (curr_path, class_fullname(type(field))))
-        # if deep and class_fullname(type(field)) == RELATED_OBJ_TYPE and class_fullname(type(field_value)) == RELATED_MGR_TYPE:
         if deep and class_fullname(type(field)) in RELATED_TYPES and class_fullname(type(field_value)) == RELATED_MGR_TYPE:
             model_as_dict[field_name] = [
                 model_to_dict(
@@ -90,52 +89,6 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
             datetime_converter = type_converters.get('datetime.datetime')
             model_as_dict[field_name] = datetime_converter(field_value) if datetime_converter else field_value.isoformat()
     return model_as_dict
-
-
-# # def model_to_dict(model_obj, deep=True, date_format=STD_DATE_FORMAT):
-# def model_to_dict(model_obj, deep=True):
-#     import decimal
-#     import datetime
-#     import copy
-#     from mirus import mirus_utils
-#     if not model_obj:
-#         return None
-#     RELATED_OBJ_TYPE = "django.db.models.related.RelatedObject"
-#     RELATED_MGR_TYPE = "django.db.models.fields.related.RelatedManager"
-#     ONE_TO_ONE_TYPE = "django.db.models.fields.related.OneToOneField"
-#     # model_as_dict = copy.deepcopy(model_obj.__dict__)  # F. Henard 10/29/15 - deepcopy causing a problem in django 1.8.
-#     # Pretty sure we don't need to deepcopy because we are diving into the model through _meta.get_all_field_names()
-#     model_as_dict = copy.copy(model_obj.__dict__)
-#     model_fieldnames = model_obj._meta.get_all_field_names()
-#     exclusion_fieldname_list = [fieldname for fieldname in model_as_dict.keys() if fieldname not in model_fieldnames]
-#     model_as_dict = exclude_from_dict(model_as_dict, exclusion_fieldname_list)
-#     for field_name in model_fieldnames:
-#         field = model_obj._meta.get_field_by_name(field_name)[0]
-#         try:
-#             field_value = model_obj.__getattribute__(field_name)
-#         except AttributeError:
-#             continue
-#         if deep and class_fullname(type(field)) == RELATED_OBJ_TYPE and class_fullname(type(field_value)) == RELATED_MGR_TYPE:
-#             model_as_dict[field_name] = [model_to_dict(child) for child in field_value.all()]
-#         elif deep and class_fullname(type(field)) == ONE_TO_ONE_TYPE and not isinstance(field_value, int):
-#             # F. Henard 1/26/15 - Checking for int because in django 1.7 the id of the one-to-one relation is of type OneToOneField
-#             # try:
-#             model_as_dict[field_name] = model_to_dict(field_value)
-#             # except:
-#             #     logger.error("Error converting one-to-one field.  field name is '%s', field type is '%s', value type is '%s', value is '%s', getattr is '%s'" % (
-#             #         field_name,
-#             #         ONE_TO_ONE_TYPE,
-#             #         class_fullname(type(field_value)),
-#             #         field_value,
-#             #         getattr(model_obj, field_name)
-#             #     ))
-#             #     raise
-#         elif isinstance(field_value, decimal.Decimal):
-#             model_as_dict[field_name] = float(field_value)
-#         elif type(field_value) == datetime.datetime:
-#             # model_as_dict[field_name] = field_value.strftime(date_format)
-#             model_as_dict[field_name] = field_value.isoformat()
-#     return model_as_dict
 
 
 # Save a model object from a json string
@@ -216,15 +169,6 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
             elif field_type_str == DECIMAL_FIELD and dikt_copy[field_name]:
                 # cast floats to str for decimal field
                 dikt_copy[field_name] = decimal.Decimal(str(dikt_copy[field_name]))
-        # else:
-        #     if field_type_str not in [FOREIGN_KEY_FIELD_TYPE,
-        #                               # CHILD_FIELD_TYPE,
-        #                               DATE_TIME_FIELD_TYPE,
-        #                               # ONE_TO_ONE_REL_TYPE,
-        #     ] + CHILD_FIELD_TYPES:
-        #         # if we don't explicitly set the field to None, then the constructor unfortunately
-        #         #  sets it to empty string
-        #         dikt_copy[field_name] = None
     # import pprint; logger.debug("after: %s" % pprint.pformat(dikt_copy))
     if "id" in dikt_copy.keys() and dikt_copy["id"] is not None:
         matching_instances = model_obj_type.objects.filter(id=dikt_copy["id"])
