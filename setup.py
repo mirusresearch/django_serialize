@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django_serialize',
-    version='1.0.2.dev1',
+    version='1.1.0.dev0',
     description='Serialization utilities for django models',
     author='Mirus Research',
     author_email='frank@mirusresearch.com',

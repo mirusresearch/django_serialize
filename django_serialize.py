@@ -69,6 +69,7 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
         #     'next_include_paths': next_include_paths,
         # }))
         # logger.debug("path = %s; field type = %s" % (curr_path, class_fullname(type(field))))
+        type_converter = type_converters.get(class_fullname(type(field_value)))
         if deep and class_fullname(type(field)) in RELATED_TYPES and class_fullname(type(field_value)) == RELATED_MGR_TYPE:
             model_as_dict[field_name] = [
                 model_to_dict(
@@ -86,8 +87,10 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
         elif isinstance(field_value, decimal.Decimal):
             model_as_dict[field_name] = float(field_value)
         elif type(field_value) == datetime.datetime:
-            datetime_converter = type_converters.get('datetime.datetime')
-            model_as_dict[field_name] = datetime_converter(field_value) if datetime_converter else field_value.isoformat()
+            supplied_dt_cvtr = type_converters.get('datetime.datetime')
+            model_as_dict[field_name] = supplied_dt_cvtr(field_value) if supplied_dt_cvtr else field_value.isoformat()
+        elif type_converter:
+            model_as_dict[field_name] = type_converter(field_value)
     return model_as_dict
 
 
