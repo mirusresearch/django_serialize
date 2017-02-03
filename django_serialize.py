@@ -27,7 +27,7 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
     RELATED_TYPES = [RELATED_OBJ_TYPE, MANY_TO_ONE_REL_TYPE]
 
     model_as_dict = copy.copy(model_obj.__dict__)
-    model_fieldnames = model_obj._meta.get_all_field_names()
+    model_fieldnames = [fld.name for fld in model_obj._meta.get_fields()]
     def should_exclude_field(_fieldname):
         return fieldname not in model_fieldnames or \
             include_paths and \
