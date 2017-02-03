@@ -57,7 +57,7 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
                 raise Exception("unrecognized include path type of '%s'" % type(include_paths))
             if not can_recurse:
                 continue
-        field = model_obj._meta.get_field_by_name(field_name)[0]
+        field = model_obj._meta.get_field(field_name)
         try:
             field_value = model_obj.__getattribute__(field_name)
         except AttributeError:
@@ -104,7 +104,7 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
 
     def recursive_delete(obj_to_delete, parent_fk_field_name):
         for field_name in obj_to_delete._meta.get_all_field_names():
-            field = obj_to_delete._meta.get_field_by_name(field_name)[0]
+            field = obj_to_delete._meta.get_field(field_name)
             if class_fullname(type(field)) == "django.db.models.related.RelatedObject":
                 for child in obj_to_delete.__getattribute__(field_name).all():
                     recursive_delete(child, field.field.name)
@@ -129,7 +129,7 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
             del dikt_copy[input_field_name]
     child_fields = []
     for field_name in model_obj_type._meta.get_all_field_names():
-        field = model_obj_type._meta.get_field_by_name(field_name)[0]
+        field = model_obj_type._meta.get_field(field_name)
         field_type_str = class_fullname(type(field))
         # logger.debug('field_type_str = %s' % field_type_str)
         if field_name in dikt_copy.keys():
