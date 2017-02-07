@@ -20,7 +20,14 @@ else:
 ONE_TO_ONE_TYPE = 'django.db.models.fields.related.OneToOneField'
 
 
-def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converters={}):
+def model_to_dict(
+        model_obj,
+        deep=True,
+        include_paths={},
+        exclude_paths={},
+        path=[],
+        type_converters={},
+):
     if not model_obj:
         return None
     RELATED_OBJ_TYPE = "django.db.models.related.RelatedObject"
@@ -57,6 +64,10 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
                 raise Exception("unrecognized include path type of '%s'" % type(include_paths))
             if not can_recurse:
                 continue
+        next_exclude_paths = exclude_paths.get(field_name, {})
+        if isinstance(next_exclude_paths, bool):
+            if next_exclude_paths:
+                continue
         field = model_obj._meta.get_field(field_name)
         try:
             field_value = model_obj.__getattribute__(field_name)
@@ -76,6 +87,7 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
                     child,
                     path=curr_path,
                     include_paths=next_include_paths,
+                    exclude_paths=next_exclude_paths,
                 ) for child in field_value.all()]
         elif deep and class_fullname(type(field)) == ONE_TO_ONE_TYPE and not isinstance(field_value, int):
             # F. Henard 1/26/15 - Checking for int because in django 1.7 the id of the one-to-one relation is of type OneToOneField
@@ -83,6 +95,19 @@ def model_to_dict(model_obj, deep=True, include_paths={}, path=[], type_converte
                 field_value,
                 path=curr_path,
                 include_paths=next_include_paths,
+                exclude_paths=next_exclude_paths,
+            )
+        elif deep and class_fullname(type(field)) == 'django.db.models.fields.related.ForeignKey' and include_paths and include_paths.get(field_name):
+            # only include a ForeignKey relationship if it has been explicitly requested in the
+            # include paths.
+            # line below: don't recurse the reverse relationship
+            exclude_reverse = {field.related.name: True}
+            next_exclude_paths = next_exclude_paths.update(exclude_reverse) if next_exclude_paths else exclude_reverse
+            model_as_dict[field_name] = model_to_dict(
+                field_value,
+                path=curr_path,
+                include_paths=next_include_paths,
+                exclude_paths={field.related.name: True},
             )
         elif isinstance(field_value, decimal.Decimal):
             model_as_dict[field_name] = float(field_value)

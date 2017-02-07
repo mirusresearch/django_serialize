@@ -1,6 +1,6 @@
 # This reqs.txt file is intended for testing this library with django.  It's not needed for installing the library
 
-# django>=1.9,<1.10
-django>=1.8,<1.9
+django>=1.9,<1.10
+# django>=1.8,<1.9
 django-nose==1.4.4
 packaging==16.8

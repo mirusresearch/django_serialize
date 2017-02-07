@@ -59,3 +59,21 @@ class ModelToDictTests(unittest.TestCase):
     #     pobj.a_many_to_many_child.add(cmtm)
     #     res = django_serialize.model_to_dict(pobj)
     #     import pprint; pprint.pprint(res)
+
+    def test_foreign_key(self):
+        pobj = Parent.objects.create(
+            some_char_property='testing',
+        )
+        cotm = ChildOneToMany.objects.create(
+            my_parent=pobj,
+            another_int_property=2,
+        )
+        include_paths = {
+            'my_parent': True,
+            'another_int_property': True,
+            'id': True,
+        }
+        res = django_serialize.model_to_dict(cotm, include_paths=include_paths)
+        # import pprint; pprint.pprint(res)
+        self.assertEqual(res['another_int_property'], 2)
+        self.assertEqual(res['my_parent']['some_char_property'], 'testing')
