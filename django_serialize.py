@@ -101,13 +101,13 @@ def model_to_dict(
             # only include a ForeignKey relationship if it has been explicitly requested in the
             # include paths.
             # line below: don't recurse the reverse relationship
-            exclude_reverse = {field.related.name: True}
+            exclude_reverse = {field.rel.name: True}
             next_exclude_paths = next_exclude_paths.update(exclude_reverse) if next_exclude_paths else exclude_reverse
             model_as_dict[field_name] = model_to_dict(
                 field_value,
                 path=curr_path,
                 include_paths=next_include_paths,
-                exclude_paths={field.related.name: True},
+                exclude_paths={field.rel.name: True},
             )
         elif isinstance(field_value, decimal.Decimal):
             model_as_dict[field_name] = float(field_value)
@@ -131,10 +131,9 @@ def deep_deserialize(json_str, model_obj_type):
 def deep_deserialize_from_dict(dikt, model_obj_type):
 
     def recursive_delete(obj_to_delete, parent_fk_field_name):
-        for field_name in obj_to_delete._meta.get_all_field_names():
-            field = obj_to_delete._meta.get_field(field_name)
+        for field in obj_to_delete._meta.get_fields():
             if class_fullname(type(field)) == "django.db.models.related.RelatedObject":
-                for child in obj_to_delete.__getattribute__(field_name).all():
+                for child in obj_to_delete.__getattribute__(field.name).all():
                     recursive_delete(child, field.field.name)
         obj_to_delete.delete()
 
@@ -150,34 +149,34 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     ]
     DATE_TIME_FIELD_TYPE = "django.db.models.fields.DateTimeField"
     DECIMAL_FIELD = "django.db.models.fields.DecimalField"
+    model_fields = model_obj_type._meta.get_fields()
     dikt_copy = copy.copy(dikt)
     for input_field_name in dikt_copy.keys():
         # delete all fields in input dict that don't exist in the model
-        if input_field_name not in model_obj_type._meta.get_all_field_names():
+        if input_field_name not in [f.name for f in model_fields]:
             del dikt_copy[input_field_name]
     child_fields = []
-    for field_name in model_obj_type._meta.get_all_field_names():
-        field = model_obj_type._meta.get_field(field_name)
+    for field in model_fields:
         field_type_str = class_fullname(type(field))
         # logger.debug('field_type_str = %s' % field_type_str)
-        if field_name in dikt_copy.keys():
+        if field.name in dikt_copy.keys():
             if field_type_str == FOREIGN_KEY_FIELD_TYPE:
-                if field_name.endswith("_id") and field_name[:-len("_id")] in dikt_copy.keys():
+                if field.name.endswith("_id") and field.name[:-len("_id")] in dikt_copy.keys():
                     # as of django 1.7 the fk id field is included
-                    del dikt_copy[field_name]
+                    del dikt_copy[field.name]
                 else:
-                    dikt_copy[field_name] = field.related.model.objects.get(pk=dikt_copy[field_name])
+                    dikt_copy[field.name] = field.related_model.objects.get(pk=dikt_copy[field.name])
             elif field_type_str == ONE_TO_ONE_TYPE:
-                oto_child_obj = deep_deserialize_from_dict(copy.deepcopy(dikt[field_name]), field.related_model)
-                dikt_copy[field_name] = oto_child_obj
+                oto_child_obj = deep_deserialize_from_dict(copy.deepcopy(dikt[field.name]), field.related_model)
+                dikt_copy[field.name] = oto_child_obj
             elif field_type_str in CHILD_FIELD_TYPES:
                 child_fields.append(field)
-                del dikt_copy[field_name]
-            elif field_type_str == DATE_TIME_FIELD_TYPE and field.auto_now_add and dikt_copy[field_name] is None:
-                del dikt_copy[field_name]
-            elif field_type_str == DECIMAL_FIELD and dikt_copy[field_name]:
+                del dikt_copy[field.name]
+            elif field_type_str == DATE_TIME_FIELD_TYPE and field.auto_now_add and dikt_copy[field.name] is None:
+                del dikt_copy[field.name]
+            elif field_type_str == DECIMAL_FIELD and dikt_copy[field.name]:
                 # cast floats to str for decimal field
-                dikt_copy[field_name] = decimal.Decimal(str(dikt_copy[field_name]))
+                dikt_copy[field.name] = decimal.Decimal(str(dikt_copy[field.name]))
     # import pprint; logger.debug("after: %s" % pprint.pformat(dikt_copy))
     if "id" in dikt_copy.keys() and dikt_copy["id"] is not None:
         matching_instances = model_obj_type.objects.filter(id=dikt_copy["id"])
