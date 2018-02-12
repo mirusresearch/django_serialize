@@ -36,7 +36,7 @@ def model_to_dict(
     model_as_dict = copy.copy(model_obj.__dict__)
     model_fieldnames = [fld.name for fld in model_obj._meta.get_fields()]
     def should_exclude_field(_fieldname):
-        return fieldname not in model_fieldnames or \
+        return _fieldname not in model_fieldnames or \
             include_paths and \
             ((isinstance(include_paths, list) and _fieldname not in include_paths) or \
              (isinstance(include_paths, dict) and _fieldname not in include_paths.keys()))

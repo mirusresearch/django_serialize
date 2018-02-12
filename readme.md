@@ -1,6 +1,8 @@
 # django_serialize #
 
-Intended for django versions 1.8 and above.  Tested with django 1.8 and django 1.9.
+Intended for django versions 1.8 and above.  
+
+2/12/18 - Version 1.3.1 - Tested with Python 2.7 and 3.6 - django versions 1.8, 1.9, 1.10, 1.11
 
 # Testing
 
@@ -23,7 +25,10 @@ Intended for django versions 1.8 and above.  Tested with django 1.8 and django 1
 
 # Deploy
 
-`$ python setup.py sdist upload -r pypi` - from [here](http://peterdowns.com/posts/first-time-with-pypi.html)
+- `$ python3 setup.py bdist_wheel`
+- `$ twine upload dist/*`
+
+from [here](https://packaging.python.org/tutorials/distributing-packages/)
 
 # Install Specific Version
 
