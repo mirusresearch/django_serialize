@@ -121,8 +121,9 @@ def model_to_dict(
 
 # Save a model object from a json string
 def deep_deserialize(json_str, model_obj_type):
+    import six
     import json
-    if json_str is None or not isinstance(json_str, basestring) or len(json_str) == 0:
+    if json_str is None or not isinstance(json_str, six.string_types) or len(json_str) == 0:
         return None
     return deep_deserialize_from_dict(json.loads(json_str), model_obj_type)
 
@@ -150,11 +151,16 @@ def deep_deserialize_from_dict(dikt, model_obj_type):
     DATE_TIME_FIELD_TYPE = "django.db.models.fields.DateTimeField"
     DECIMAL_FIELD = "django.db.models.fields.DecimalField"
     model_fields = model_obj_type._meta.get_fields()
-    dikt_copy = copy.copy(dikt)
-    for input_field_name in dikt_copy.keys():
-        # delete all fields in input dict that don't exist in the model
-        if input_field_name not in [f.name for f in model_fields]:
-            del dikt_copy[input_field_name]
+    # dikt_copy = copy.copy(dikt)
+    # for input_field_name in dikt_copy.keys():
+    #     # delete all fields in input dict that don't exist in the model
+    #     if input_field_name not in [f.name for f in model_fields]:
+    #         del dikt_copy[input_field_name]
+    dikt_copy = {}
+    model_field_names = [f.name for f in model_fields]
+    for input_field_name in dikt:
+        if input_field_name in model_field_names:
+            dikt_copy[input_field_name] = dikt[input_field_name]
     child_fields = []
     for field in model_fields:
         field_type_str = class_fullname(type(field))
